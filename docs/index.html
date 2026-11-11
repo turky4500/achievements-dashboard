@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>لوحة انجازات موظفين الرخص التجارية والاستثمارية</title>
 <link rel="stylesheet" href="style.css">
 <script src="vendor/chart.js"></script>
@@ -10,24 +11,39 @@
 </head>
 <body>
 
-<!-- صفحة الدخول -->
+<!-- ============ صفحة الدخول ============ -->
 <section id="login" class="center-page hidden">
   <form class="login-card" id="loginForm">
+    <div class="brand login-brand"><span>أمانة منطقة الرياض</span></div>
     <h1>مرحبا بك في لوحة انجازات موظفين الرخص التجارية والاستثمارية</h1>
     <p>يرجى تسجيل الدخول للاطلاع على الإحصائيات</p>
     <div class="field"><span>اسم المستخدم</span><input id="lu" required autocomplete="username"></div>
     <div class="field"><span>كلمة المرور</span><input id="lp" type="password" required autocomplete="current-password"></div>
     <div id="lerr" class="msg err hidden"></div>
-    <button class="btn" type="submit">دخول</button>
-    <p class="hint" style="margin-top:14px">نسخة تجريبية: الحساب التجريبي <b>viewer</b> وكلمة المرور <b>demo123</b></p>
+    <button class="btn" type="submit" id="loginBtn">دخول</button>
   </form>
 </section>
 
-<!-- لوحة العرض -->
+<!-- ============ الإعداد الأولي للمالك (يظهر فقط قبل إنشاء النظام) ============ -->
+<section id="setup" class="center-page hidden">
+  <form class="login-card" id="setupForm">
+    <div class="brand login-brand"><span>إعداد النظام</span></div>
+    <h1>إنشاء حساب المالك</h1>
+    <p>هذه الخطوة تُنفَّذ مرة واحدة. تحتاج رمز GitHub بصلاحية الكتابة على هذا المستودع فقط.</p>
+    <div class="field"><span>رمز GitHub (Fine-grained token)</span><input id="sToken" type="password" required></div>
+    <div class="field"><span>اسم المستخدم للمالك</span><input id="sUser" required pattern="[A-Za-z0-9_.\-]{3,32}"></div>
+    <div class="field"><span>الاسم الظاهر</span><input id="sName" required></div>
+    <div class="field"><span>كلمة المرور (8 أحرف على الأقل)</span><input id="sPass" type="password" minlength="8" required></div>
+    <div id="serr" class="msg err hidden"></div>
+    <button class="btn" type="submit" id="setupBtn">إنشاء النظام</button>
+  </form>
+</section>
+
+<!-- ============ لوحة العرض ============ -->
 <section id="dashboard" class="hidden">
   <div class="topbar">
     <div>
-      <div class="brand"><img src="logo.png" alt="" onerror="this.remove()"><span>أمانة منطقة الرياض</span></div>
+      <div class="brand"><span>أمانة منطقة الرياض</span></div>
       <h1 class="greet">مرحبا بك، <span id="who"></span></h1>
       <div class="sub">لوحة انجازات موظفين الرخص التجارية والاستثمارية · عرض فقط · اضغط على أي مؤشر أو عمود لعرض التفاصيل</div>
     </div>
@@ -40,7 +56,6 @@
       <label>إلى تاريخ <input type="date" id="to"></label>
       <button class="btn secondary" id="resetBtn">إعادة تعيين</button>
     </div>
-
     <div class="kpis">
       <div class="kpi" id="k-total"><div class="label">إجمالي الإنجازات</div><div class="value" id="v-total">0</div><div class="hint">اضغط لإعادة تعيين الفلاتر</div></div>
       <div class="kpi" id="k-emps"><div class="label">عدد الموظفين</div><div class="value" id="v-emps">0</div><div class="hint">اضغط للانتقال إلى الجدول</div></div>
@@ -48,7 +63,6 @@
       <div class="kpi" id="k-files"><div class="label">عدد الملفات المرفوعة</div><div class="value" id="v-files">0</div><div class="hint" id="h-last"></div></div>
       <div class="kpi" id="k-top"><div class="label">الأعلى إنجازا</div><div class="value" id="v-top">—</div><div class="hint" id="h-top"></div></div>
     </div>
-
     <div class="grid">
       <div class="card"><h2>إنجاز كل موظف</h2><div class="hint">اضغط على الشريط لعرض التفاصيل</div>
         <div class="chart-box" id="box-bar"><canvas id="c-bar"></canvas></div></div>
@@ -59,7 +73,6 @@
       <div class="card"><h2>الإنجاز الشهري</h2><div class="hint">اضغط على عمود الشهر لتصفية اللوحة عليه</div>
         <div class="chart-box"><canvas id="c-month"></canvas></div></div>
     </div>
-
     <div class="card">
       <div class="form-row" style="justify-content:space-between">
         <div><h2>جدول الموظفين</h2><div class="hint">اضغط على أي صف لعرض التفاصيل</div></div>
@@ -74,13 +87,31 @@
   </div>
 </section>
 
-<!-- الصفحة المخفية للمالك (تُفتح بالرابط #owner-console فقط) -->
+<!-- ============ الصفحة المخفية للمالك ============ -->
 <section id="owner" class="hidden">
   <div class="topbar">
-    <div><h1>لوحة المالك</h1><div class="sub">رفع ملفات الإنجازات وعرضها محليا في هذا المتصفح</div></div>
-    <button class="btn secondary" id="ownerLogout">خروج</button>
+    <div>
+      <div class="brand"><span>أمانة منطقة الرياض</span></div>
+      <h1>لوحة إدارة الإنجازات</h1>
+      <div class="sub">مرحبا <span id="owho"></span> · إدارة الملفات والمستخدمين</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn secondary" id="toDash">عرض اللوحة</button>
+      <button class="btn secondary" id="ownerLogout">تسجيل الخروج</button>
+    </div>
   </div>
   <div class="container">
+
+    <div class="card">
+      <h2>رمز GitHub</h2>
+      <div class="hint">يُحفظ في متصفحك فقط، ويُستخدم لحفظ التغييرات في المستودع. أنشئ رمزا Fine-grained يقتصر على هذا المستودع بصلاحية Contents: Read and write.</div>
+      <div class="form-row">
+        <label class="field">الرمز<input type="password" id="ghToken" style="min-width:300px"></label>
+        <button class="btn" id="saveToken">حفظ الرمز</button>
+      </div>
+      <div id="tmsg" class="msg hidden"></div>
+    </div>
+
     <div class="card">
       <h2>رفع ملف إنجازات</h2>
       <div class="hint">الأعمدة المطلوبة: اسم الموظف، والمنجز من قبل الموظف. كل ملف يُضاف إلى الإجمالي السابق لكل موظف وينسب إلى التاريخ المختار.</div>
@@ -88,17 +119,44 @@
         <label class="field">الملف (xlsx / xls / csv)<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
         <label class="field">تاريخ الإنجاز<input type="date" id="udate"></label>
         <button class="btn gold" id="uploadBtn">رفع الملف</button>
-        <button class="btn danger" id="clearBtn">مسح كل البيانات</button>
       </div>
       <div id="umsg" class="msg hidden"></div>
-    </div>
-    <div class="card">
-      <h2>الملفات المرفوعة في هذا المتصفح</h2>
+      <h2 style="margin-top:14px">الملفات المرفوعة</h2>
       <div class="table-wrap"><table>
         <thead><tr><th>تاريخ الإنجاز</th><th>اسم الملف</th><th>عدد الموظفين</th><th>إجمالي الملف</th><th></th></tr></thead>
         <tbody id="ftbody"></tbody>
       </table></div>
       <div id="fempty" class="empty hidden">لا توجد ملفات بعد</div>
+    </div>
+
+    <div class="card">
+      <h2>إضافة مستخدم</h2>
+      <div class="hint">يدخل المستخدم بالاسم وكلمة المرور التي تحددها هنا. كلمة المرور 8 أحرف على الأقل.</div>
+      <div class="form-row">
+        <label class="field">اسم المستخدم<input id="nu" placeholder="user.name"></label>
+        <label class="field">الاسم الظاهر<input id="nd" placeholder="الاسم الكامل"></label>
+        <label class="field">كلمة المرور<input id="np" type="text"></label>
+        <label class="field">الصلاحية
+          <select id="nr"><option value="viewer">عرض فقط</option><option value="admin">مالك</option></select>
+        </label>
+        <button class="btn gold" id="addUser">إضافة</button>
+      </div>
+      <div id="usmsg" class="msg hidden"></div>
+      <h2 style="margin-top:14px">المستخدمون</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>اسم المستخدم</th><th>الاسم الظاهر</th><th>الصلاحية</th><th></th></tr></thead>
+        <tbody id="utbody"></tbody>
+      </table></div>
+      <div class="hint" style="margin-top:8px">ملاحظة: حذف المستخدم يمنعه من الدخول مستقبلا، لكن لا يمحو ما حصل عليه سابقا من نسخ البيانات القديمة في سجل GitHub.</div>
+    </div>
+
+    <div class="card">
+      <h2>تغيير كلمة مرورك</h2>
+      <div class="form-row">
+        <label class="field">كلمة المرور الجديدة<input id="pn" type="password" minlength="8"></label>
+        <button class="btn" id="passBtn">حفظ</button>
+      </div>
+      <div id="pmsg" class="msg hidden"></div>
     </div>
   </div>
 </section>
@@ -122,63 +180,183 @@
 </div>
 
 <script>
-/* ===== بيانات تجريبية بأسماء وهمية ===== */
-const DEMO_ROWS = [
-  ['موظف تجريبي الأول', 325], ['موظفة تجريبية الثانية', 1398], ['موظف تجريبي الثالث', 3524],
-  ['موظف تجريبي الرابع', 50], ['موظفة تجريبية الخامسة', 1326], ['موظف تجريبي السادس', 1739],
-  ['موظف تجريبي السابع', 133], ['موظفة تجريبية الثامنة', 303], ['موظف تجريبي التاسع', 91],
-  ['موظفة تجريبية العاشرة', 934], ['موظف تجريبي الحادي عشر', 1480], ['موظفة تجريبية الثانية عشرة', 1532]
-];
-const DEMO_USERS = { viewer: { pass: 'demo123', name: 'مشاهد تجريبي' } };
-const OWNER_PASS = 'owner-demo';
-const KEY = 'achievements-demo-v1';
+/* =====================================================================
+   النظام: كل البيانات مشفرة (AES-GCM) داخل المستودع، ولا تُفك إلا بكلمة مرور
+   المستخدم. كل مستخدم له نسخة مشفرة من المفتاح الرئيسي تُفك بكلمة مروره.
+   ===================================================================== */
+const REPO = 'turky4500/achievements-dashboard';
+const API = `https://api.github.com/repos/${REPO}/contents/docs/data/`;
+const ITER = 310000;
+const BAD_LOGIN = 'اسم المستخدم أو كلمة المرور غير صحيحة';
 
-/* ===== التخزين المحلي ===== */
-function loadStore() {
-  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.uploads)) return s; } catch {}
-  const today = todayStr();
-  return { uploads: [{ id: 1, filename: 'بيانات تجريبية', date: '2026-11-10', rows: DEMO_ROWS.map(([name, value]) => ({ name, value })) }] };
-}
-function saveStore(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
-let store = loadStore();
-
-/* ===== أدوات ===== */
+/* ---------- أدوات عامة ---------- */
 const $ = id => document.getElementById(id);
-const COLORS = ['#2563eb','#12b76a','#f79009','#7a5af8','#f04438','#0ba5ec','#eaaa08','#ee46bc','#15b79e','#444ce7'];
+const enc = new TextEncoder(), dec = new TextDecoder();
+const COLORS = ['#ea4f6b','#12b76a','#f79009','#7a5af8','#2563eb','#0ba5ec','#eaaa08','#ee46bc','#15b79e','#444ce7'];
 const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-function todayStr() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' }); }
+const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
 function normKey(s) { return s.replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase(); }
 function toNumber(v) {
   if (typeof v === 'number') return v;
   if (typeof v === 'string') { const t = v.replace(/[,\s٬]/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)); const n = Number(t); return t !== '' && isFinite(n) ? n : NaN; }
   return NaN;
 }
-function parseRows(buf) {
-  const wb = XLSX.read(buf, { type: 'array' });
-  const grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
-  let nc = -1, vc = -1, start = 0;
-  for (let i = 0; i < Math.min(grid.length, 30); i++) {
-    let a = -1, b = -1;
-    grid[i].forEach((c, j) => { const s = String(c).trim(); if (a < 0 && /(اسم|الموظف|name|employee)/i.test(s)) a = j; if (b < 0 && /(منجز|انجاز|إنجاز|عدد)/i.test(s)) b = j; });
-    if (a >= 0 && b >= 0) { nc = a; vc = b; start = i + 1; break; }
-  }
-  if (nc < 0) { nc = 0; vc = 1; }
-  const map = new Map();
-  for (let i = start; i < grid.length; i++) {
-    const name = String(grid[i][nc] ?? '').replace(/\s+/g, ' ').trim();
-    if (!name || /(اجمالي|المجموع|total)/i.test(normKey(name))) continue;
-    const v = toNumber(grid[i][vc]); if (!isFinite(v)) continue;
-    const k = normKey(name); const cur = map.get(k) || { name, value: 0 }; cur.value += v; map.set(k, cur);
-  }
-  return [...map.values()];
+function show(section) {
+  ['login', 'setup', 'dashboard', 'owner'].forEach(s => $(s).classList.toggle('hidden', s !== section));
+}
+function msg(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+/* ---------- ترميز وتشفير ---------- */
+function toB64(bytes) { const u = new Uint8Array(bytes); let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+function fromB64(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+const utf8ToB64 = str => toB64(enc.encode(str));
+
+async function pbkdf2Key(password, salt) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function aesEncrypt(key, bytes) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes));
+  return { iv: toB64(iv), ct: toB64(ct) };
+}
+async function aesDecrypt(key, box) {
+  return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(box.iv) }, key, fromB64(box.ct)));
+}
+async function importMaster(raw) { return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']); }
+/** يلف المفتاح الرئيسي بكلمة مرور المستخدم */
+async function wrapMaster(password, masterRaw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const k = await pbkdf2Key(password, salt);
+  return { salt: toB64(salt), wrap: await aesEncrypt(k, masterRaw) };
 }
 
-/* ===== التجميع (التراكم) ===== */
+/* ---------- الجلسة ---------- */
+let SESSION = null;  // {username, displayName, role, master}
+let USERS = null;    // محتوى users.json
+let STORE = null;    // البيانات المفكوكة {uploads:[]}
+
+function saveSession() { sessionStorage.setItem('session', JSON.stringify(SESSION)); }
+function loadSession() { try { return JSON.parse(sessionStorage.getItem('session')); } catch { return null; } }
+function getToken() { return localStorage.getItem('gh-token') || ''; }
+
+/* ---------- قراءة ملفات المستودع (من Pages) ---------- */
+async function fetchJson(path) {
+  const r = await fetch(path + '?t=' + Date.now(), { cache: 'no-store' });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('تعذر تحميل البيانات');
+  return r.json();
+}
+async function loadStore(masterRaw) {
+  const box = await fetchJson('data/store.enc.json');
+  if (!box) return { uploads: [] };
+  const k = await importMaster(masterRaw);
+  return JSON.parse(dec.decode(await aesDecrypt(k, box)));
+}
+
+/* ---------- الكتابة إلى GitHub ---------- */
+const ghHeaders = t => ({ Authorization: 'Bearer ' + t, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
+async function ghPut(file, text, message, token = getToken()) {
+  if (!token) throw new Error('أدخل رمز GitHub في لوحة المالك أولا');
+  const url = API + file;
+  let sha;
+  const g = await fetch(url, { headers: ghHeaders(token), cache: 'no-store' });
+  if (g.status === 200) sha = (await g.json()).sha;
+  else if (g.status !== 404) throw new Error('تعذر الوصول إلى GitHub (رمز ' + g.status + ')');
+  const body = { message, content: utf8ToB64(text), branch: 'main' };
+  if (sha) body.sha = sha;
+  const p = await fetch(url, { method: 'PUT', headers: { ...ghHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!p.ok) { const e = await p.json().catch(() => ({})); throw new Error('فشل الحفظ في GitHub: ' + (e.message || p.status)); }
+}
+async function saveStore() {
+  const k = await importMaster(fromB64(SESSION.master));
+  const box = await aesEncrypt(k, enc.encode(JSON.stringify(STORE)));
+  await ghPut('store.enc.json', JSON.stringify({ version: 1, ...box }, null, 1), 'تحديث بيانات الإنجازات');
+}
+async function saveUsers(message) {
+  await ghPut('users.json', JSON.stringify(USERS, null, 1), message);
+}
+
+/* ---------- الدخول ---------- */
+async function attemptLogin(username, password) {
+  const users = await fetchJson('data/users.json');
+  if (!users) return { setup: true };
+  const rec = users.users.find(x => x.username === username);
+  if (!rec) throw new Error(BAD_LOGIN);
+  let masterRaw;
+  try {
+    const k = await pbkdf2Key(password, fromB64(rec.salt));
+    masterRaw = await aesDecrypt(k, rec.wrap);
+  } catch { throw new Error(BAD_LOGIN); }
+  return { users, session: { username: rec.username, displayName: rec.displayName, role: rec.role, master: toB64(masterRaw) } };
+}
+
+$('loginForm').onsubmit = async e => {
+  e.preventDefault();
+  $('loginBtn').disabled = true; $('lerr').classList.add('hidden');
+  try {
+    const r = await attemptLogin($('lu').value.trim(), $('lp').value);
+    if (r.setup) { show('setup'); return; }
+    USERS = r.users; SESSION = r.session;
+    STORE = await loadStore(fromB64(SESSION.master));
+    saveSession();
+    route();
+  } catch (ex) { msg($('lerr'), ex.message, false); $('lerr').classList.remove('hidden'); }
+  finally { $('loginBtn').disabled = false; }
+};
+
+$('setupForm').onsubmit = async e => {
+  e.preventDefault();
+  $('setupBtn').disabled = true; $('serr').classList.add('hidden');
+  try {
+    const token = $('sToken').value.trim();
+    const username = $('sUser').value.trim(), displayName = $('sName').value.trim(), password = $('sPass').value;
+    if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username)) throw new Error('اسم المستخدم بالإنجليزية أو الأرقام فقط (3 إلى 32 حرفا)');
+    if (password.length < 8) throw new Error('كلمة المرور 8 أحرف على الأقل');
+    const masterRaw = crypto.getRandomValues(new Uint8Array(32));
+    const { salt, wrap } = await wrapMaster(password, masterRaw);
+    const mk = await importMaster(masterRaw);
+    const box = await aesEncrypt(mk, enc.encode(JSON.stringify({ uploads: [] })));
+    localStorage.setItem('gh-token', token);
+    await ghPut('store.enc.json', JSON.stringify({ version: 1, ...box }, null, 1), 'إنشاء مخزن البيانات', token);
+    const users = { version: 1, iterations: ITER, users: [{ username, displayName, role: 'admin', salt, wrap }] };
+    await ghPut('users.json', JSON.stringify(users, null, 1), 'إنشاء حساب المالك', token);
+    alert('تم إنشاء النظام. ستتحقق الصفحة من النشر خلال دقيقة تقريبا، ثم سجل الدخول بحساب المالك.');
+    location.hash = '';
+    location.reload();
+  } catch (ex) { msg($('serr'), ex.message, false); $('serr').classList.remove('hidden'); }
+  finally { $('setupBtn').disabled = false; }
+};
+
+/* ---------- التوجيه ---------- */
+async function route() {
+  if (!SESSION) SESSION = loadSession();
+  const owner = location.hash === '#owner-console';
+  if (!SESSION) {
+    if (owner) {
+      const users = await fetchJson('data/users.json');
+      if (!users) { show('setup'); return; }
+    }
+    show('login'); return;
+  }
+  if (!USERS) USERS = await fetchJson('data/users.json');
+  if (!STORE) STORE = await loadStore(fromB64(SESSION.master));
+  if (owner && SESSION.role === 'admin') { await renderOwner(); show('owner'); return; }
+  $('who').textContent = SESSION.displayName;
+  show('dashboard');
+  refresh();
+}
+window.addEventListener('hashchange', route);
+
+$('logoutBtn').onclick = $('ownerLogout').onclick = () => { sessionStorage.removeItem('session'); SESSION = null; location.hash = ''; route(); };
+$('toDash').onclick = () => { location.hash = ''; route(); };
+
+/* ---------- التجميع (التراكم) ---------- */
 function aggregate(from, to) {
   const perEmp = new Map(), monthly = new Map(), months = new Set();
   let files = 0, last = null;
-  for (const u of store.uploads) {
+  for (const u of STORE.uploads) {
     months.add(u.date.slice(0, 7));
     if (from && u.date < from) continue;
     if (to && u.date > to) continue;
@@ -186,7 +364,7 @@ function aggregate(from, to) {
     const m = u.date.slice(0, 7);
     for (const r of u.rows) {
       const k = normKey(r.name);
-      const e = perEmp.get(k) || { name: r.name, total: 0, days: new Set(), last: null, daily: new Map(), monthly: new Map() };
+      const e = perEmp.get(k) || { key: k, name: r.name, total: 0, days: new Set(), last: null, daily: new Map(), monthly: new Map() };
       e.total += r.value; e.days.add(u.date); if (!e.last || u.date > e.last) e.last = u.date;
       e.daily.set(u.date, (e.daily.get(u.date) || 0) + r.value);
       e.monthly.set(m, (e.monthly.get(m) || 0) + r.value);
@@ -194,18 +372,17 @@ function aggregate(from, to) {
       monthly.set(m, (monthly.get(m) || 0) + r.value);
     }
   }
-  const employees = [...perEmp.entries()].map(([key, e]) => ({ key, name: e.name, total: Math.round(e.total * 100) / 100, days: e.days.size, last: e.last, daily: e.daily, monthly: e.monthly }))
-    .sort((a, b) => b.total - a.total);
+  const employees = [...perEmp.values()].map(e => ({ ...e, total: Math.round(e.total * 100) / 100 })).sort((a, b) => b.total - a.total);
   const total = employees.reduce((s, e) => s + e.total, 0);
   return { employees, total, files, last, months: [...months].sort(), monthly: [...monthly.entries()].sort(), top: employees[0] || null };
 }
 
-/* ===== العرض ===== */
+/* ---------- لوحة العرض ---------- */
 const charts = {};
+let agg = null;
 function destroy(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
 function monthLabel(ym) { const [y, m] = ym.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }); }
 function lastDay(ym) { const [y, m] = ym.split('-').map(Number); return String(new Date(y, m, 0).getDate()).padStart(2, '0'); }
-let agg = null;
 
 function refresh() {
   agg = aggregate($('from').value, $('to').value);
@@ -224,7 +401,7 @@ function refresh() {
   $('box-bar').style.height = Math.max(320, emps.length * 34) + 'px';
   destroy('bar');
   if (emps.length) charts.bar = new Chart($('c-bar'), {
-    type: 'bar', data: { labels: emps.map(e => e.name), datasets: [{ data: emps.map(e => e.total), backgroundColor: '#2563eb', borderRadius: 6 }] },
+    type: 'bar', data: { labels: emps.map(e => e.name), datasets: [{ data: emps.map(e => e.total), backgroundColor: '#ea4f6b', borderRadius: 6 }] },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
       onClick: (ev, els) => { if (els.length) openEmp(emps[els[0].index].key); },
       onHover: (ev, els, c) => c.canvas.style.cursor = els.length ? 'pointer' : 'default' }
@@ -248,13 +425,12 @@ function refresh() {
       onClick: (ev, els) => { if (els.length) setMonth(agg.monthly[els[0].index][0]); },
       onHover: (ev, els, c) => c.canvas.style.cursor = els.length ? 'pointer' : 'default' }
   });
-
   renderTable();
 }
 function renderTable() {
   const q = $('search').value.trim(), total = agg.total || 1;
   const rows = agg.employees.filter(e => !q || e.name.includes(q));
-  $('tbody').innerHTML = rows.map((e, i) => `<tr class="clickable" data-k="${esc(e.key)}"><td>${i + 1}</td><td>${esc(e.name)}</td><td><b>${fmt(e.total)}</b></td><td>${(e.total / total * 100).toFixed(1)}%</td><td>${e.days.size ?? e.days}</td><td>${esc(e.last || '—')}</td></tr>`).join('');
+  $('tbody').innerHTML = rows.map((e, i) => `<tr class="clickable" data-k="${esc(e.key)}"><td>${i + 1}</td><td>${esc(e.name)}</td><td><b>${fmt(e.total)}</b></td><td>${(e.total / total * 100).toFixed(1)}%</td><td>${e.days.size}</td><td>${esc(e.last || '—')}</td></tr>`).join('');
   $('empty').classList.toggle('hidden', rows.length > 0);
   $('tbody').querySelectorAll('tr').forEach(tr => tr.onclick = () => openEmp(tr.dataset.k));
 }
@@ -268,13 +444,13 @@ function openEmp(key) {
   const total = agg.total || 1;
   $('m-name').textContent = e.name;
   $('m-range').textContent = $('from').value || $('to').value ? `الفترة: ${$('from').value || '—'} إلى ${$('to').value || '—'}` : 'كل الفترات';
-  $('m-total').textContent = fmt(e.total); $('m-days').textContent = e.days.size ?? e.days;
+  $('m-total').textContent = fmt(e.total); $('m-days').textContent = e.days.size;
   $('m-share').textContent = (e.total / total * 100).toFixed(1) + '%';
   destroy('daily'); destroy('empm');
   const days = [...e.daily.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   let run = 0; const cum = days.map(([, v]) => (run += v));
   charts.daily = new Chart($('c-daily'), { data: { labels: days.map(d => d[0]), datasets: [
-    { type: 'bar', label: 'إنجاز اليوم', data: days.map(d => d[1]), backgroundColor: '#2563eb', borderRadius: 4 },
+    { type: 'bar', label: 'إنجاز اليوم', data: days.map(d => d[1]), backgroundColor: '#ea4f6b', borderRadius: 4 },
     { type: 'line', label: 'الإجمالي التراكمي', data: cum, borderColor: '#f79009', backgroundColor: '#f79009', tension: .3 } ] },
     options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } } });
   const ms = [...e.monthly.entries()].sort();
@@ -283,78 +459,131 @@ function openEmp(key) {
   $('modal').classList.add('open');
 }
 function closeModal() { $('modal').classList.remove('open'); destroy('daily'); destroy('empm'); }
-
-/* ===== التنقل ===== */
-function show(section) {
-  ['login', 'dashboard', 'owner'].forEach(s => $(s).classList.toggle('hidden', s !== section));
-  document.body.style.background = section === 'login' ? '' : '#f1f5fb';
-}
-function route() {
-  const session = sessionStorage.getItem('session');
-  const h = location.hash;
-  if (h === '#owner-console') {
-    if (sessionStorage.getItem('owner') === '1') { show('owner'); renderOwner(); }
-    else { ownerLogin(); }
-    return;
-  }
-  if (!session) { show('login'); return; }
-  const du = DEMO_USERS[session]; $('who').textContent = du ? du.name : session;
-  show('dashboard'); refresh();
-}
-function ownerLogin() {
-  const p = prompt('كلمة مرور المالك:');
-  if (p === OWNER_PASS) { sessionStorage.setItem('owner', '1'); show('owner'); renderOwner(); }
-  else { alert('كلمة المرور غير صحيحة'); location.hash = ''; }
-}
-
-$('loginForm').onsubmit = e => {
-  e.preventDefault();
-  const u = $('lu').value.trim(), p = $('lp').value;
-  if (DEMO_USERS[u] && DEMO_USERS[u].pass === p) { sessionStorage.setItem('session', u); $('who').textContent = DEMO_USERS[u].name; $('lerr').classList.add('hidden'); route(); }
-  else { $('lerr').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة'; $('lerr').classList.remove('hidden'); }
-};
-$('logoutBtn').onclick = () => { sessionStorage.removeItem('session'); location.hash = ''; route(); };
-$('ownerLogout').onclick = () => { sessionStorage.removeItem('owner'); location.hash = ''; route(); };
-$('month').onchange = () => setMonth($('month').value);
-$('resetBtn').onclick = () => setMonth('');
 $('k-total').onclick = () => setMonth('');
 $('k-emps').onclick = () => $('tbody').scrollIntoView({ behavior: 'smooth' });
 $('k-top').onclick = () => agg.top && openEmp(agg.top.key);
+$('month').onchange = () => setMonth($('month').value);
+$('resetBtn').onclick = () => setMonth('');
+$('from').onchange = $('to').onchange = () => { $('month').value = ''; refresh(); };
 $('search').oninput = renderTable;
 $('closeModal').onclick = closeModal;
 $('modal').onclick = e => { if (e.target === $('modal')) closeModal(); };
-$('from').onchange = $('to').onchange = () => { $('month').value = ''; refresh(); };
-window.addEventListener('hashchange', route);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-/* ===== صفحة المالك ===== */
-function renderOwner() {
-  $('udate').value = $('udate').value || todayStr();
-  $('ftbody').innerHTML = store.uploads.slice().reverse().map(u => `<tr><td>${esc(u.date)}</td><td>${esc(u.filename)}</td><td>${u.rows.length}</td><td>${fmt(u.rows.reduce((s, r) => s + r.value, 0))}</td><td><button class="btn danger small" data-id="${u.id}">حذف</button></td></tr>`).join('');
-  $('fempty').classList.toggle('hidden', store.uploads.length > 0);
-  $('ftbody').querySelectorAll('button').forEach(b => b.onclick = () => {
-    if (!confirm('حذف هذا الملف من هذا المتصفح؟')) return;
-    store.uploads = store.uploads.filter(x => x.id !== +b.dataset.id); saveStore(store); renderOwner();
+/* ---------- لوحة المالك ---------- */
+async function renderOwner() {
+  $('owho').textContent = SESSION.displayName;
+  $('ghToken').value = getToken();
+  if (!$('udate').value) $('udate').value = todayStr();
+  $('ftbody').innerHTML = STORE.uploads.slice().reverse().map(u => `<tr><td>${esc(u.date)}</td><td>${esc(u.filename)}</td><td>${u.rows.length}</td><td>${fmt(u.rows.reduce((s, r) => s + r.value, 0))}</td><td><button class="btn danger small" data-id="${u.id}">حذف</button></td></tr>`).join('');
+  $('fempty').classList.toggle('hidden', STORE.uploads.length > 0);
+  $('ftbody').querySelectorAll('button').forEach(b => b.onclick = () => deleteUpload(+b.dataset.id));
+  $('utbody').innerHTML = USERS.users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.displayName)}</td><td>${u.role === 'admin' ? 'مالك' : 'عرض فقط'}</td>
+    <td>${u.username === SESSION.username ? '' : `<button class="btn secondary small" data-reset="${esc(u.username)}">تغيير كلمة المرور</button> <button class="btn danger small" data-del="${esc(u.username)}">حذف</button>`}</td></tr>`).join('');
+  $('utbody').querySelectorAll('[data-reset]').forEach(b => b.onclick = () => resetUserPassword(b.dataset.reset));
+  $('utbody').querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeUser(b.dataset.del));
+}
+$('saveToken').onclick = () => {
+  const t = $('ghToken').value.trim();
+  if (t) localStorage.setItem('gh-token', t); else localStorage.removeItem('gh-token');
+  msg($('tmsg'), 'تم حفظ الرمز في هذا المتصفح', true); $('tmsg').classList.remove('hidden');
+};
+
+async function withBusy(btn, fn) {
+  btn.disabled = true;
+  try { await fn(); } catch (ex) { alert(ex.message); } finally { btn.disabled = false; }
+}
+function showMsgIn(id, text, ok) { msg($(id), text, ok); $(id).classList.remove('hidden'); }
+
+$('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
+  const f = $('file').files[0];
+  if (!f) return showMsgIn('umsg', 'اختر ملفا أولا', false);
+  if (!$('udate').value) return showMsgIn('umsg', 'حدد تاريخ الإنجاز', false);
+  const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+  const grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
+  let nc = -1, vc = -1, start = 0;
+  for (let i = 0; i < Math.min(grid.length, 30); i++) {
+    let a = -1, b = -1;
+    grid[i].forEach((c, j) => { const s = String(c).trim(); if (a < 0 && /(اسم|الموظف|name|employee)/i.test(s)) a = j; if (b < 0 && /(منجز|انجاز|إنجاز|عدد)/i.test(s)) b = j; });
+    if (a >= 0 && b >= 0) { nc = a; vc = b; start = i + 1; break; }
+  }
+  if (nc < 0) { nc = 0; vc = 1; }
+  const map = new Map();
+  for (let i = start; i < grid.length; i++) {
+    const name = String(grid[i][nc] ?? '').replace(/\s+/g, ' ').trim();
+    if (!name || /(اجمالي|المجموع|total)/i.test(normKey(name))) continue;
+    const v = toNumber(grid[i][vc]); if (!isFinite(v)) continue;
+    const k = normKey(name); const cur = map.get(k) || { name, value: 0 }; cur.value += v; map.set(k, cur);
+  }
+  const rows = [...map.values()].map(r => ({ name: r.name, value: Math.round(r.value * 100) / 100 }));
+  if (!rows.length) return showMsgIn('umsg', 'لم يتم العثور على بيانات. تأكد من عمود "اسم الموظف" وعمود "المنجز من قبل الموظف"', false);
+  const entry = { id: Date.now(), filename: f.name, date: $('udate').value, rows };
+  STORE.uploads.push(entry);
+  showMsgIn('umsg', 'جارٍ الحفظ المشفر في GitHub...', true);
+  try { await saveStore(); }
+  catch (ex) { STORE.uploads = STORE.uploads.filter(u => u !== entry); throw ex; }
+  $('file').value = '';
+  showMsgIn('umsg', `تم رفع ${rows.length} موظف بتاريخ ${$('udate').value}. سيظهر في اللوحة بعد دقيقة تقريبا بعد إعادة النشر.`, true);
+  await renderOwner();
+});
+
+async function deleteUpload(id) {
+  if (!confirm('حذف هذا الملف وإلغاء إنجازاته من الإجماليات؟')) return;
+  await withBusy($('ftbody'), async () => {
+    STORE.uploads = STORE.uploads.filter(u => u.id !== id);
+    await saveStore();
+    await renderOwner();
   });
 }
-function showMsg(text, ok) { const m = $('umsg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
-$('uploadBtn').onclick = async () => {
-  const f = $('file').files[0];
-  if (!f) return showMsg('اختر ملفا أولا', false);
-  if (!$('udate').value) return showMsg('حدد تاريخ الإنجاز', false);
-  try {
-    const rows = parseRows(await f.arrayBuffer());
-    if (!rows.length) return showMsg('لم يتم العثور على بيانات. تأكد من عمود "اسم الموظف" وعمود "المنجز من قبل الموظف"', false);
-    const id = Date.now();
-    store.uploads.push({ id, filename: f.name, date: $('udate').value, rows });
-    saveStore(store);
-    $('file').value = '';
-    showMsg(`تم رفع ${rows.length} موظف بتاريخ ${$('udate').value}`, true);
-    renderOwner();
-  } catch { showMsg('تعذر قراءة الملف، تأكد أنه ملف Excel صالح', false); }
-};
-$('clearBtn').onclick = () => { if (confirm('مسح كل الملفات من هذا المتصفح؟')) { store = { uploads: [] }; saveStore(store); renderOwner(); } };
 
-route();
+$('addUser').onclick = () => withBusy($('addUser'), async () => {
+  const username = $('nu').value.trim(), displayName = $('nd').value.trim() || username, password = $('np').value, role = $('nr').value;
+  if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username)) return showMsgIn('usmsg', 'اسم المستخدم بالإنجليزية أو الأرقام فقط (3 إلى 32 حرفا)', false);
+  if (password.length < 8) return showMsgIn('usmsg', 'كلمة المرور 8 أحرف على الأقل', false);
+  if (USERS.users.some(u => u.username === username)) return showMsgIn('usmsg', 'اسم المستخدم موجود مسبقا', false);
+  const { salt, wrap } = await wrapMaster(password, fromB64(SESSION.master));
+  USERS.users.push({ username, displayName, role, salt, wrap });
+  await saveUsers('إضافة مستخدم: ' + username);
+  $('nu').value = ''; $('nd').value = ''; $('np').value = '';
+  showMsgIn('usmsg', `تمت إضافة ${username}. سيُفعَّل الدخول بعد دقيقة تقريبا.`, true);
+  await renderOwner();
+});
+
+async function resetUserPassword(username) {
+  const pw = prompt(`كلمة المرور الجديدة للمستخدم ${username} (8 أحرف على الأقل):`);
+  if (!pw) return;
+  if (pw.length < 8) return alert('كلمة المرور 8 أحرف على الأقل');
+  await withBusy($('utbody'), async () => {
+    const rec = USERS.users.find(u => u.username === username);
+    const { salt, wrap } = await wrapMaster(pw, fromB64(SESSION.master));
+    rec.salt = salt; rec.wrap = wrap;
+    await saveUsers('تغيير كلمة مرور: ' + username);
+    alert('تم تغيير كلمة المرور');
+  });
+}
+async function removeUser(username) {
+  if (!confirm(`حذف المستخدم ${username}؟`)) return;
+  await withBusy($('utbody'), async () => {
+    USERS.users = USERS.users.filter(u => u.username !== username);
+    await saveUsers('حذف مستخدم: ' + username);
+    await renderOwner();
+  });
+}
+$('passBtn').onclick = () => withBusy($('passBtn'), async () => {
+  const pw = $('pn').value;
+  if (pw.length < 8) return showMsgIn('pmsg', 'كلمة المرور 8 أحرف على الأقل', false);
+  const rec = USERS.users.find(u => u.username === SESSION.username);
+  const { salt, wrap } = await wrapMaster(pw, fromB64(SESSION.master));
+  rec.salt = salt; rec.wrap = wrap;
+  await saveUsers('تغيير كلمة مرور المالك');
+  $('pn').value = '';
+  showMsgIn('pmsg', 'تم تغيير كلمة المرور. استخدمها في الدخول القادم.', true);
+});
+
+/* ---------- البداية ---------- */
+(async () => {
+  try { await route(); } catch (ex) { show('login'); msg($('lerr'), ex.message, false); $('lerr').classList.remove('hidden'); }
+})();
 </script>
 </body>
 </html>
