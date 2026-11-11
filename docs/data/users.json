@@ -1,0 +1,16 @@
+{
+ "version": 1,
+ "iterations": 310000,
+ "users": [
+  {
+   "username": "turky4500",
+   "displayName": "turky",
+   "role": "admin",
+   "salt": "E+N26ueclR4XzAJTdYtWuA==",
+   "wrap": {
+    "iv": "89E72IdQLf+rk63b",
+    "ct": "X8A214osbBBwT3NdW+trsx7GN8XzmLXT5Y7Wl5P6m+2ycLxcqeWagXTiAMf9mijz"
+   }
+  }
+ ]
+}
