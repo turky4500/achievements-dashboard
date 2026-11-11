@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة انجازات الموظفين</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="center-page">
+  <form class="login-card" id="form" autocomplete="on">
+    <h1>مرحبا بك في لوحة انجازات موظفين الرخص التجارية والاستثمارية</h1>
+    <p>يرجى تسجيل الدخول للاطلاع على الإحصائيات</p>
+    <div class="field"><span>اسم المستخدم</span><input name="username" id="username" required autocomplete="username"></div>
+    <div class="field"><span>كلمة المرور</span><input name="password" id="password" type="password" required autocomplete="current-password"></div>
+    <div id="err" class="msg err hidden"></div>
+    <button class="btn" id="btn" type="submit">دخول</button>
+  </form>
+</div>
+<script src="/common.js"></script>
+<script>
+(async () => {
+  try { await api('/api/me'); location.href = '/dashboard'; } catch {}
+})();
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('err'), btn = document.getElementById('btn');
+  err.classList.add('hidden'); btn.disabled = true;
+  try {
+    await api('/api/login', { method: 'POST', body: {
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value } });
+    location.href = '/dashboard';
+  } catch (ex) {
+    err.textContent = ex.message; err.classList.remove('hidden');
+  } finally { btn.disabled = false; }
+});
+</script>
+</body>
+</html>

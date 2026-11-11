@@ -1,0 +1,54 @@
+:root{--bg1:#0b1f3a;--bg2:#13335e;--ink:#1d2939;--muted:#667085;--blue:#2563eb;--gold:#f2b705;--line:#e4e7ec;--shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,'Segoe UI',Arial,sans-serif;direction:rtl;background:#f1f5fb;color:var(--ink)}
+.topbar{background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.topbar h1{font-size:20px;margin:0}
+.topbar .sub{opacity:.8;font-size:13px;margin-top:4px}
+.container{max-width:1280px;margin:0 auto;padding:20px}
+.btn{border:0;border-radius:8px;padding:9px 16px;font-family:inherit;font-size:14px;cursor:pointer;background:var(--blue);color:#fff}
+.btn.secondary{background:#e4e7ec;color:var(--ink)}
+.btn.danger{background:#d92d20;color:#fff}
+.btn.gold{background:var(--gold);color:var(--ink)}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.6;cursor:wait}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:#fff;padding:14px;border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px}
+.filters label,.field{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input,select{padding:8px 10px;border:1px solid #d0d5dd;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow);cursor:pointer;border-right:4px solid var(--blue);transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(16,24,40,.12)}
+.kpi .label{color:var(--muted);font-size:13px}
+.kpi .value{font-size:24px;font-weight:700;margin-top:6px;word-break:break-word}
+.kpi .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+.grid.one{grid-template-columns:1fr}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 4px}
+.card .hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+.chart-box{position:relative;height:320px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#f8fafc;color:var(--muted);font-weight:600}
+tbody tr.clickable{cursor:pointer}
+tbody tr.clickable:hover{background:#eef4ff}
+.table-wrap{overflow-x:auto}
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal.open{display:flex}
+.modal .box{background:#fff;border-radius:14px;max-width:960px;width:100%;max-height:92vh;overflow:auto;padding:20px}
+.msg{padding:10px 12px;border-radius:8px;font-size:14px;margin:10px 0}
+.msg.err{background:#fef3f2;color:#b42318}
+.msg.ok{background:#ecfdf3;color:#067647}
+.hidden{display:none !important}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{background:#fff;border:1px solid #d0d5dd;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:14px}
+.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.empty{text-align:center;color:var(--muted);padding:30px}
+.center-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--bg1),var(--bg2))}
+.login-card{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login-card h1{font-size:20px;line-height:1.7;margin:0 0 6px;color:var(--bg1)}
+.login-card p{color:var(--muted);font-size:14px;margin:0 0 20px}
+.login-card .field{margin-bottom:14px}
+.login-card input{width:100%}
+.login-card .btn{width:100%;padding:11px}

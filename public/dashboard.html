@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة إنجازات الموظفين</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/vendor/chart.js"></script>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>مرحبا بك في لوحة انجازات موظفين الرخص التجارية والاستثمارية</h1>
+    <div class="sub">عرض فقط · مرحبا <span id="who"></span> · اضغط على أي مؤشر أو عمود لعرض التفاصيل</div>
+  </div>
+  <button class="btn secondary" onclick="logout()">تسجيل الخروج</button>
+</div>
+
+<div class="container">
+  <div class="filters">
+    <label>الشهر
+      <select id="month"><option value="">كل الأشهر</option></select>
+    </label>
+    <label>من تاريخ <input type="date" id="from"></label>
+    <label>إلى تاريخ <input type="date" id="to"></label>
+    <button class="btn" id="apply">تطبيق</button>
+    <button class="btn secondary" id="reset">إعادة تعيين</button>
+  </div>
+  <div id="notice" class="msg err hidden"></div>
+
+  <div class="kpis">
+    <div class="kpi" id="k-total" title="إعادة تعيين الفلاتر"><div class="label">إجمالي الإنجازات</div><div class="value" id="v-total">0</div><div class="hint">مجموع كل الملفات المرفوعة</div></div>
+    <div class="kpi" id="k-emps" title="انتقل إلى الجدول"><div class="label">عدد الموظفين</div><div class="value" id="v-emps">0</div><div class="hint">موظف لديهم إنجاز</div></div>
+    <div class="kpi" id="k-avg"><div class="label">متوسط الإنجاز للموظف</div><div class="value" id="v-avg">0</div><div class="hint">الإجمالي ÷ عدد الموظفين</div></div>
+    <div class="kpi" id="k-uploads"><div class="label">الملفات المرفوعة</div><div class="value" id="v-uploads">0</div><div class="hint" id="h-last">آخر تحديث: —</div></div>
+    <div class="kpi" id="k-top" title="عرض تفاصيل الموظف"><div class="label">الأعلى إنجازا</div><div class="value" id="v-top">—</div><div class="hint" id="h-top"></div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>إنجاز كل موظف</h2>
+      <div class="hint">اضغط على الشريط لعرض تفاصيل الموظف</div>
+      <div class="chart-box" id="box-bar"><canvas id="c-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>حصة الموظفين من الإجمالي</h2>
+      <div class="hint">أفضل 10 موظفين، اضغط على القطعة للتفاصيل</div>
+      <div class="chart-box"><canvas id="c-donut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid one">
+    <div class="card">
+      <h2>الإنجاز الشهري</h2>
+      <div class="hint">اضغط على عمود الشهر لتصفية اللوحة على ذلك الشهر</div>
+      <div class="chart-box"><canvas id="c-month"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-row" style="justify-content:space-between">
+      <div><h2>جدول الموظفين</h2><div class="hint">اضغط على أي صف لعرض التفاصيل</div></div>
+      <input id="search" placeholder="بحث باسم الموظف" style="min-width:220px">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>اسم الموظف</th><th>إجمالي الإنجاز</th><th>نسبة من الإجمالي</th><th>أيام الإنجاز</th><th>آخر تحديث</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="empty hidden">لا توجد بيانات في الفترة المحددة</div>
+  </div>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="box">
+    <div class="form-row" style="justify-content:space-between">
+      <div><h2 id="m-name" style="margin:0"></h2><div class="hint" id="m-range"></div></div>
+      <button class="btn secondary" onclick="closeModal()">إغلاق</button>
+    </div>
+    <div class="kpis">
+      <div class="kpi" style="cursor:default"><div class="label">إجمالي الإنجاز</div><div class="value" id="m-total">0</div></div>
+      <div class="kpi" style="cursor:default"><div class="label">أيام الإنجاز</div><div class="value" id="m-days">0</div></div>
+      <div class="kpi" style="cursor:default"><div class="label">نسبته من الإجمالي</div><div class="value" id="m-share">0%</div></div>
+    </div>
+    <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+      <h2>الإنجاز اليومي والتراكمي</h2>
+      <div class="hint">الأعمدة: إنجاز اليوم · الخط: الإجمالي التراكمي</div>
+      <div class="chart-box"><canvas id="c-daily"></canvas></div>
+    </div>
+    <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+      <h2>الإنجاز الشهري للموظف</h2>
+      <div class="chart-box" style="height:260px"><canvas id="c-emp-month"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script src="/common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let summary = null, charts = {}, sortedEmps = [], rangeFrom = '', rangeTo = '';
+const COLORS = ['#2563eb','#12b76a','#f79009','#7a5af8','#f04438','#0ba5ec','#eaaa08','#ee46bc','#15b79e','#444ce7','#98a2b3'];
+
+function destroy(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } }
+function queryString() {
+  const q = new URLSearchParams();
+  if ($('from').value) q.set('from', $('from').value);
+  if ($('to').value) q.set('to', $('to').value);
+  return q.toString();
+}
+function lastDayOf(ym) { const [y, m] = ym.split('-').map(Number); return new Date(y, m, 0).getDate(); }
+function monthLabel(ym) {
+  const [y, m] = ym.split('-');
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
+}
+
+function setMonth(ym) {
+  $('month').value = ym || '';
+  if (ym) { $('from').value = ym + '-01'; $('to').value = ym + '-' + String(lastDayOf(ym)).padStart(2, '0'); }
+  else { $('from').value = ''; $('to').value = ''; }
+  load();
+}
+
+async function load() {
+  try {
+    summary = await api('/api/summary?' + queryString());
+    $('notice').classList.add('hidden');
+  } catch (e) {
+    $('notice').textContent = e.message; $('notice').classList.remove('hidden');
+    if (e.status === 401) location.href = '/';
+    return;
+  }
+  fillMonths(); renderKpis(); renderBar(); renderDonut(); renderMonthly(); renderTable();
+}
+
+function fillMonths() {
+  const sel = $('month'), cur = sel.value;
+  sel.innerHTML = '<option value="">كل الأشهر</option>' +
+    summary.months.slice().reverse().map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.value = summary.months.includes(cur) ? cur : '';
+}
+
+function renderKpis() {
+  const k = summary.kpis;
+  $('v-total').textContent = fmt(k.total);
+  $('v-emps').textContent = fmt(k.employees);
+  $('v-avg').textContent = fmt(k.average);
+  $('v-uploads').textContent = fmt(k.uploads);
+  $('h-last').textContent = 'آخر تحديث: ' + (k.lastUpload || '—');
+  $('v-top').textContent = k.top ? k.top.name : '—';
+  $('h-top').textContent = k.top ? 'إنجاز: ' + fmt(k.top.total) : '';
+}
+
+function renderBar() {
+  sortedEmps = summary.employees;
+  $('box-bar').style.height = Math.max(320, sortedEmps.length * 34) + 'px';
+  destroy('bar');
+  if (!sortedEmps.length) return;
+  charts.bar = new Chart($('c-bar'), {
+    type: 'bar',
+    data: { labels: sortedEmps.map(e => e.name), datasets: [{ label: 'الإنجاز', data: sortedEmps.map(e => e.total), backgroundColor: '#2563eb', borderRadius: 6 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      onClick: (ev, els) => { if (els.length) openEmployee(sortedEmps[els[0].index].id); },
+      onHover: (ev, els, chart) => { chart.canvas.style.cursor = els.length ? 'pointer' : 'default'; }
+    }
+  });
+}
+
+function renderDonut() {
+  destroy('donut');
+  const top = sortedEmps.slice(0, 10);
+  const rest = sortedEmps.slice(10).reduce((s, e) => s + e.total, 0);
+  const labels = top.map(e => e.name), data = top.map(e => e.total);
+  if (rest > 0) { labels.push('أخرى'); data.push(rest); }
+  if (!data.length) return;
+  charts.donut = new Chart($('c-donut'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: COLORS }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      onClick: (ev, els) => { if (els.length && els[0].index < top.length) openEmployee(top[els[0].index].id); },
+      onHover: (ev, els, chart) => { chart.canvas.style.cursor = els.length ? 'pointer' : 'default'; }
+    }
+  });
+}
+
+function renderMonthly() {
+  destroy('month');
+  const m = summary.monthly;
+  if (!m.length) return;
+  charts.month = new Chart($('c-month'), {
+    type: 'bar',
+    data: { labels: m.map(x => monthLabel(x.month)), datasets: [{ label: 'إنجاز الشهر', data: m.map(x => x.total), backgroundColor: '#12b76a', borderRadius: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      onClick: (ev, els) => { if (els.length) setMonth(m[els[0].index].month); },
+      onHover: (ev, els, chart) => { chart.canvas.style.cursor = els.length ? 'pointer' : 'default'; }
+    }
+  });
+}
+
+function renderTable() {
+  const q = $('search').value.trim();
+  const total = summary.kpis.total || 1;
+  const rows = sortedEmps.filter(e => !q || e.name.includes(q));
+  $('tbody').innerHTML = rows.map((e, i) => `
+    <tr class="clickable" data-id="${e.id}">
+      <td>${i + 1}</td><td>${esc(e.name)}</td><td><b>${fmt(e.total)}</b></td>
+      <td>${((e.total / total) * 100).toFixed(1)}%</td><td>${e.days}</td><td>${esc(e.lastDate || '—')}</td>
+    </tr>`).join('');
+  $('empty').classList.toggle('hidden', rows.length > 0);
+  $('tbody').querySelectorAll('tr').forEach(tr => tr.onclick = () => openEmployee(Number(tr.dataset.id)));
+}
+
+async function openEmployee(id) {
+  let d;
+  try { d = await api(`/api/employees/${id}?` + queryString()); }
+  catch (e) { alert(e.message); return; }
+  const total = summary.kpis.total || 1;
+  $('m-name').textContent = d.employee.name;
+  $('m-range').textContent = summary.range.from === '0000-01-01' ? 'كل الفترات' : `الفترة: ${$('from').value || '—'} إلى ${$('to').value || '—'}`;
+  $('m-total').textContent = fmt(d.total);
+  $('m-days').textContent = d.days;
+  $('m-share').textContent = ((d.total / total) * 100).toFixed(1) + '%';
+  destroy('daily'); destroy('emp-month');
+  let run = 0;
+  const cumulative = d.daily.map(x => (run += x.total));
+  if (d.daily.length) {
+    charts.daily = new Chart($('c-daily'), {
+      data: {
+        labels: d.daily.map(x => x.date),
+        datasets: [
+          { type: 'bar', label: 'إنجاز اليوم', data: d.daily.map(x => x.total), backgroundColor: '#2563eb', borderRadius: 4 },
+          { type: 'line', label: 'الإجمالي التراكمي', data: cumulative, borderColor: '#f79009', backgroundColor: '#f79009', tension: .3, yAxisID: 'y' }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false } }
+    });
+  }
+  if (d.monthly.length) {
+    charts.empMonth = new Chart($('c-emp-month'), {
+      type: 'bar',
+      data: { labels: d.monthly.map(x => monthLabel(x.month)), datasets: [{ label: 'إنجاز الشهر', data: d.monthly.map(x => x.total), backgroundColor: '#12b76a', borderRadius: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+  }
+  $('modal').classList.add('open');
+}
+function closeModal() { $('modal').classList.remove('open'); destroy('daily'); destroy('emp-month'); }
+
+// KPI interactions
+$('k-total').onclick = () => setMonth('');
+$('k-emps').onclick = () => $('tbody').scrollIntoView({ behavior: 'smooth' });
+$('k-top').onclick = () => summary.kpis.top && openEmployee(summary.kpis.top.id);
+
+// filters
+$('month').onchange = () => setMonth($('month').value);
+$('apply').onclick = () => { $('month').value = ''; load(); };
+$('reset').onclick = () => setMonth('');
+$('search').oninput = () => renderTable();
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+(async () => {
+  try { const me = await api('/api/me'); $('who').textContent = me.displayName; }
+  catch { location.href = '/'; return; }
+  load();
+})();
+</script>
+</body>
+</html>

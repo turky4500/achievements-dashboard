@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>لوحة المالك</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- بوابة الدخول -->
+<div class="center-page hidden" id="gate">
+  <form class="login-card" id="gateForm">
+    <h1>دخول المالك</h1>
+    <p>هذه الصفحة خاصة بإدارة الملفات والمستخدمين</p>
+    <div class="field"><span>اسم المستخدم</span><input id="gu" required autocomplete="username"></div>
+    <div class="field"><span>كلمة المرور</span><input id="gp" type="password" required autocomplete="current-password"></div>
+    <div id="gerr" class="msg err hidden"></div>
+    <button class="btn" type="submit">دخول</button>
+  </form>
+</div>
+
+<!-- لوحة الإدارة -->
+<div id="panel" class="hidden">
+  <div class="topbar">
+    <div><h1>لوحة إدارة الإنجازات</h1><div class="sub">مرحبا <span id="pwho"></span></div></div>
+    <button class="btn secondary" onclick="logout()">تسجيل الخروج</button>
+  </div>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" data-tab="upload">رفع ملف</button>
+      <button class="tab" data-tab="files">الملفات المرفوعة</button>
+      <button class="tab" data-tab="users">المستخدمون</button>
+      <button class="tab" data-tab="pass">تغيير كلمة المرور</button>
+    </div>
+
+    <!-- رفع -->
+    <div class="card" id="tab-upload">
+      <h2>رفع ملف إنجازات</h2>
+      <div class="hint">كل ملف يُضاف إلى الإجمالي السابق لكل موظف، وينسب إنجازه إلى التاريخ المختار. الأعمدة المطلوبة: اسم الموظف، والمنجز من قبل الموظف.</div>
+      <div class="form-row">
+        <label class="field">الملف (xlsx / xls / csv)<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
+        <label class="field">تاريخ الإنجاز<input type="date" id="udate"></label>
+        <button class="btn gold" id="uploadBtn">رفع الملف</button>
+      </div>
+      <div id="umsg" class="msg hidden"></div>
+    </div>
+
+    <!-- الملفات -->
+    <div class="card hidden" id="tab-files">
+      <h2>الملفات المرفوعة</h2>
+      <div class="hint">حذف الملف يُلغي إنجازاته من الإجماليات.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>تاريخ الإنجاز</th><th>اسم الملف</th><th>عدد الموظفين</th><th>إجمالي الملف</th><th>تاريخ الرفع</th><th></th></tr></thead>
+        <tbody id="ftbody"></tbody>
+      </table></div>
+      <div id="fempty" class="empty hidden">لا توجد ملفات بعد</div>
+    </div>
+
+    <!-- المستخدمون -->
+    <div class="card hidden" id="tab-users">
+      <h2>إضافة مستخدم</h2>
+      <div class="form-row">
+        <label class="field">اسم المستخدم<input id="nu" placeholder="user.name"></label>
+        <label class="field">الاسم الظاهر<input id="nd" placeholder="الاسم الكامل"></label>
+        <label class="field">كلمة المرور<input id="np" type="text" placeholder="6 أحرف على الأقل"></label>
+        <label class="field">الصلاحية
+          <select id="nr"><option value="viewer">عرض فقط</option><option value="admin">مالك</option></select>
+        </label>
+        <button class="btn gold" id="addUserBtn">إضافة</button>
+      </div>
+      <div id="usmsg" class="msg hidden"></div>
+      <h2 style="margin-top:18px">المستخدمون الحاليون</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>اسم المستخدم</th><th>الاسم الظاهر</th><th>الصلاحية</th><th>تاريخ الإنشاء</th><th></th></tr></thead>
+        <tbody id="utbody"></tbody>
+      </table></div>
+    </div>
+
+    <!-- كلمة المرور -->
+    <div class="card hidden" id="tab-pass">
+      <h2>تغيير كلمة المرور الخاصة بي</h2>
+      <div class="form-row">
+        <label class="field">كلمة المرور الحالية<input id="pc" type="password"></label>
+        <label class="field">كلمة المرور الجديدة<input id="pn" type="password"></label>
+        <button class="btn" id="passBtn">حفظ</button>
+      </div>
+      <div id="pmsg" class="msg hidden"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+function show(el, text, ok) { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+function showGate() { $('gate').classList.remove('hidden'); $('panel').classList.add('hidden'); }
+function showPanel(me) { $('gate').classList.add('hidden'); $('panel').classList.remove('hidden'); $('pwho').textContent = me.displayName; $('udate').value = todayRiyadh(); loadFiles(); }
+
+$('gateForm').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await api('/api/login', { method: 'POST', body: { username: $('gu').value, password: $('gp').value, owner: true } });
+    const me = await api('/api/me');
+    if (me.role !== 'admin') throw new Error('هذه الصفحة للمالك فقط');
+    showPanel(me);
+  } catch (ex) { show($('gerr'), ex.message, false); $('gerr').classList.remove('hidden'); }
+};
+
+// tabs
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+  ['upload', 'files', 'users', 'pass'].forEach(n => $('tab-' + n).classList.toggle('hidden', t.dataset.tab !== n));
+  if (t.dataset.tab === 'files') loadFiles();
+  if (t.dataset.tab === 'users') loadUsers();
+});
+
+// upload
+$('uploadBtn').onclick = async () => {
+  const f = $('file').files[0], msg = $('umsg'), btn = $('uploadBtn');
+  if (!f) return show(msg, 'اختر ملفا أولا', false), msg.classList.remove('hidden');
+  if (!$('udate').value) return show(msg, 'حدد تاريخ الإنجاز', false), msg.classList.remove('hidden');
+  btn.disabled = true;
+  const send = async force => {
+    const r = await fetch(`/api/admin/upload?date=${$('udate').value}&force=${force ? 1 : 0}`, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'x-filename': encodeURIComponent(f.name), 'Content-Type': 'application/octet-stream' },
+      body: f
+    });
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  };
+  try {
+    let res = await send(false);
+    if (res.status === 409 && confirm(res.data.error)) res = await send(true);
+    if (!res.ok) throw new Error(res.data.error || 'فشل الرفع');
+    const d = res.data;
+    show(msg, `تم رفع الملف بنجاح: ${d.employees} موظف (${d.newEmployees} جديد)، بإجمالي إنجاز ${fmt(d.total)} بتاريخ ${$('udate').value}.`, true);
+    $('file').value = '';
+    loadFiles();
+  } catch (ex) { show(msg, ex.message, false); }
+  finally { msg.classList.remove('hidden'); btn.disabled = false; }
+};
+
+async function loadFiles() {
+  try {
+    const { uploads } = await api('/api/admin/uploads');
+    $('ftbody').innerHTML = uploads.map(u => `
+      <tr><td>${esc(u.recordDate)}</td><td>${esc(u.filename)}</td><td>${u.rows}</td><td>${fmt(u.total)}</td>
+      <td>${esc(u.uploadedAt)}</td>
+      <td><button class="btn danger small" onclick="delUpload(${u.id})">حذف</button></td></tr>`).join('');
+    $('fempty').classList.toggle('hidden', uploads.length > 0);
+  } catch (ex) { if (ex.status === 401) showGate(); }
+}
+async function delUpload(id) {
+  if (!confirm('سيتم حذف هذا الملف وإلغاء إنجازاته من الإجماليات. متأكد؟')) return;
+  try { await api('/api/admin/uploads/' + id, { method: 'DELETE' }); loadFiles(); }
+  catch (ex) { alert(ex.message); }
+}
+
+// users
+async function loadUsers() {
+  try {
+    const { users } = await api('/api/admin/users');
+    $('utbody').innerHTML = users.map(u => `
+      <tr><td>${esc(u.username)}</td><td>${esc(u.displayName)}</td>
+      <td>${u.role === 'admin' ? 'مالك' : 'عرض فقط'}</td><td>${esc(u.createdAt)}</td>
+      <td>
+        <button class="btn secondary small" onclick="resetPw(${u.id},'${esc(u.username)}')">تغيير كلمة المرور</button>
+        <button class="btn danger small" onclick="delUser(${u.id},'${esc(u.username)}')">حذف</button>
+      </td></tr>`).join('');
+  } catch (ex) { if (ex.status === 401) showGate(); }
+}
+$('addUserBtn').onclick = async () => {
+  const msg = $('usmsg');
+  try {
+    await api('/api/admin/users', { method: 'POST', body: {
+      username: $('nu').value.trim(), displayName: $('nd').value.trim(),
+      password: $('np').value, role: $('nr').value } });
+    show(msg, 'تمت إضافة المستخدم', true);
+    $('nu').value = ''; $('nd').value = ''; $('np').value = '';
+    loadUsers();
+  } catch (ex) { show(msg, ex.message, false); }
+  msg.classList.remove('hidden');
+};
+async function resetPw(id, name) {
+  const pw = prompt(`كلمة المرور الجديدة للمستخدم ${name} (6 أحرف على الأقل):`);
+  if (!pw) return;
+  try { await api(`/api/admin/users/${id}/password`, { method: 'POST', body: { password: pw } }); alert('تم تغيير كلمة المرور'); }
+  catch (ex) { alert(ex.message); }
+}
+async function delUser(id, name) {
+  if (!confirm(`حذف المستخدم ${name}؟`)) return;
+  try { await api(`/api/admin/users/${id}`, { method: 'DELETE' }); loadUsers(); }
+  catch (ex) { alert(ex.message); }
+}
+
+// own password
+$('passBtn').onclick = async () => {
+  const msg = $('pmsg');
+  try {
+    await api('/api/account/password', { method: 'POST', body: { current: $('pc').value, password: $('pn').value } });
+    show(msg, 'تم تغيير كلمة المرور', true); $('pc').value = ''; $('pn').value = '';
+  } catch (ex) { show(msg, ex.message, false); }
+  msg.classList.remove('hidden');
+};
+
+// init
+(async () => {
+  try {
+    const me = await api('/api/me');
+    if (me.role === 'admin') showPanel(me); else showGate();
+  } catch { showGate(); }
+})();
+</script>
+</body>
+</html>
