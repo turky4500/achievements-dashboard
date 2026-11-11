@@ -31,6 +31,16 @@
     "iv": "JdVRnM+Q2D1r/Xsv",
     "ct": "7ScGWThtVUIBwBXWy0048h/fZZzOsKcWNGBvoxF+6yNZNjZ8nIAp/c64En8O5PcA"
    }
+  },
+  {
+   "username": "300",
+   "displayName": "ناصر الخريش",
+   "role": "viewer",
+   "salt": "RaDdFhvjIZovVKLJkKc84Q==",
+   "wrap": {
+    "iv": "sSk1Znfw6zp0dxnV",
+    "ct": "PJOtUxmUeyFNuSfT6huKY0mLjFY5SpxGVJEqVIft4chZ/2a9QNRqjC3SN1lvNhdb"
+   }
   }
  ]
 }
