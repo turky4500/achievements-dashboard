@@ -159,6 +159,33 @@
     </div>
 
     <div class="card">
+      <h2>تقرير الزوار والمكث</h2>
+      <div class="hint">يُسجَّل دخول كل مستخدم، ويُحتسب 30 ثانية لكل فترة يكون فيها متصفحه مفتوحا وظاهرا على اللوحة.</div>
+      <div class="form-row">
+        <label class="field">كلمة مرور التقرير<input type="password" id="rpw" style="min-width:240px"></label>
+        <button class="btn" id="loadReport">عرض التقرير</button>
+      </div>
+      <div id="rmsg" class="msg hidden"></div>
+      <div id="rbody" class="hidden">
+        <h2 style="margin-top:12px">ملخص حسب المستخدم</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>اسم المستخدم</th><th>الاسم</th><th>عدد الزيارات</th><th>أول دخول</th><th>آخر نشاط</th><th>مدة المكث الإجمالية</th></tr></thead>
+          <tbody id="rsum"></tbody></table></div>
+        <h2 style="margin-top:12px">سجل الزيارات (أحدث 1000)</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>اسم المستخدم</th><th>الاسم</th><th>وقت الدخول</th><th>آخر نشاط</th><th>مدة المكث</th></tr></thead>
+          <tbody id="rlog"></tbody></table></div>
+        <div class="hint" id="rnever" style="margin-top:10px"></div>
+      </div>
+      <h2 style="margin-top:14px">تغيير كلمة مرور التقرير</h2>
+      <div class="form-row">
+        <label class="field">الحالية<input type="password" id="rold"></label>
+        <label class="field">الجديدة (10 أحرف على الأقل)<input type="password" id="rnew"></label>
+        <button class="btn secondary" id="changeRpw">تغيير</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>تغيير كلمة مرورك</h2>
       <div class="form-row">
         <label class="field">كلمة المرور الجديدة<input id="pn" type="password" minlength="8"></label>
@@ -337,6 +364,35 @@ $('setupForm').onsubmit = async e => {
   finally { $('setupBtn').disabled = false; }
 };
 
+/* ---------- تتبع الزيارات (Supabase) ---------- */
+const SB = { url: 'https://nwyoxdvfjfdbnezpqnkn.supabase.co', key: 'sb_publishable_EF4uk6puNIdyiancT_51rA_C8zA10eu' };
+async function sbRpc(fn, body) {
+  const r = await fetch(`${SB.url}/rest/v1/rpc/${fn}`, { method: 'POST',
+    headers: { apikey: SB.key, Authorization: 'Bearer ' + SB.key, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body) });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'تعذر الاتصال بقاعدة البيانات'); }
+  return r.status === 204 ? null : r.json();
+}
+let trackTimer = null;
+function startTracking() {
+  if (!SESSION || trackTimer) return;
+  let sid = sessionStorage.getItem('visit-sid');
+  if (!sid) { sid = crypto.randomUUID(); sessionStorage.setItem('visit-sid', sid); }
+  sbRpc('track_start', { p_session: sid, p_username: SESSION.username, p_name: SESSION.displayName }).catch(() => {});
+  // كل 30 ثانية تُحسب نشاطا فقط إذا كانت الصفحة مفتوحة وظاهرة
+  trackTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') sbRpc('track_beat', { p_session: sid, p_seconds: 30 }).catch(() => {});
+  }, 30000);
+}
+function endSession() {
+  if (trackTimer) clearInterval(trackTimer);
+  trackTimer = null;
+  sessionStorage.removeItem('visit-sid');
+  sessionStorage.removeItem('session');
+  SESSION = null; USERS = null; STORE = null;
+  location.hash = ''; route();
+}
+
 /* ---------- التوجيه ---------- */
 async function route() {
   if (!SESSION) SESSION = loadSession();
@@ -350,6 +406,7 @@ async function route() {
   }
   if (!USERS) USERS = await fetchJson('data/users.json');
   if (!STORE) STORE = await loadStore(fromB64(SESSION.master));
+  startTracking();
   if (owner && SESSION.role === 'admin') { await renderOwner(); show('owner'); return; }
   $('who').textContent = SESSION.displayName;
   show('dashboard');
@@ -357,7 +414,7 @@ async function route() {
 }
 window.addEventListener('hashchange', route);
 
-$('logoutBtn').onclick = $('ownerLogout').onclick = () => { sessionStorage.removeItem('session'); SESSION = null; location.hash = ''; route(); };
+$('logoutBtn').onclick = $('ownerLogout').onclick = endSession;
 $('toDash').onclick = () => { location.hash = ''; route(); };
 
 /* ---------- التجميع (التراكم) ---------- */
@@ -621,6 +678,48 @@ $('passBtn').onclick = () => withBusy($('passBtn'), async () => {
   await saveUsers('تغيير كلمة مرور المالك');
   $('pn').value = '';
   showMsgIn('pmsg', 'تم تغيير كلمة المرور. استخدمها في الدخول القادم.', true);
+});
+
+/* ---------- تقرير الزوار ---------- */
+function fmtDur(sec) {
+  sec = Math.round(sec || 0);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h} س ${m} د` : (m ? `${m} د ${s} ث` : `${s} ث`);
+}
+function fmtTime(iso) { return new Date(iso).toLocaleString('ar-SA', { timeZone: 'Asia/Riyadh', dateStyle: 'short', timeStyle: 'short' }); }
+
+$('loadReport').onclick = () => withBusy($('loadReport'), async () => {
+  const pw = $('rpw').value;
+  if (!pw) return showMsgIn('rmsg', 'أدخل كلمة مرور التقرير', false);
+  let rows;
+  try { rows = await sbRpc('visit_report', { p_pw: pw }); }
+  catch (ex) { $('rbody').classList.add('hidden'); return showMsgIn('rmsg', ex.message, false); }
+  $('rmsg').classList.add('hidden');
+  $('rbody').classList.remove('hidden');
+
+  const byUser = new Map();
+  for (const r of rows) {
+    const u = byUser.get(r.username) || { username: r.username, name: r.display_name, visits: 0, first: r.started_at, last: r.last_seen_at, secs: 0 };
+    u.visits++; u.secs += r.active_seconds;
+    if (r.started_at < u.first) u.first = r.started_at;
+    if (r.last_seen_at > u.last) u.last = r.last_seen_at;
+    byUser.set(r.username, u);
+  }
+  const sum = [...byUser.values()].sort((a, b) => b.last.localeCompare(a.last));
+  $('rsum').innerHTML = sum.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.name)}</td><td>${u.visits}</td><td>${fmtTime(u.first)}</td><td>${fmtTime(u.last)}</td><td><b>${fmtDur(u.secs)}</b></td></tr>`).join('')
+    || '<tr><td colspan="6" class="empty">لا توجد زيارات بعد</td></tr>';
+  $('rlog').innerHTML = rows.map(r => `<tr><td>${esc(r.username)}</td><td>${esc(r.display_name)}</td><td>${fmtTime(r.started_at)}</td><td>${fmtTime(r.last_seen_at)}</td><td>${fmtDur(r.active_seconds)}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="empty">لا توجد سجلات</td></tr>';
+  const seen = new Set(byUser.keys());
+  const never = USERS.users.filter(u => !seen.has(u.username) && u.role !== 'admin');
+  $('rnever').textContent = never.length ? 'لم يدخل بعد: ' + never.map(u => `${u.displayName} (${u.username})`).join('، ') : 'جميع المستخدمين الذين أضفتهم دخلوا على الأقل مرة.';
+});
+$('changeRpw').onclick = () => withBusy($('changeRpw'), async () => {
+  const nw = $('rnew').value;
+  if (nw.length < 10) return alert('كلمة المرور الجديدة 10 أحرف على الأقل');
+  await sbRpc('set_report_password', { p_old: $('rold').value, p_new: nw });
+  $('rold').value = ''; $('rnew').value = '';
+  alert('تم تغيير كلمة مرور التقرير');
 });
 
 /* ---------- البداية ---------- */
