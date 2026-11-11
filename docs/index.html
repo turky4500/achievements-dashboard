@@ -27,8 +27,9 @@
 <section id="dashboard" class="hidden">
   <div class="topbar">
     <div>
-      <h1>مرحبا بك في لوحة انجازات موظفين الرخص التجارية والاستثمارية</h1>
-      <div class="sub">عرض فقط · اضغط على أي مؤشر أو عمود لعرض التفاصيل</div>
+      <div class="brand"><img src="logo.png" alt="" onerror="this.remove()"><span>أمانة منطقة الرياض</span></div>
+      <h1 class="greet">مرحبا بك، <span id="who"></span></h1>
+      <div class="sub">لوحة انجازات موظفين الرخص التجارية والاستثمارية · عرض فقط · اضغط على أي مؤشر أو عمود لعرض التفاصيل</div>
     </div>
     <button class="btn secondary" id="logoutBtn">تسجيل الخروج</button>
   </div>
@@ -297,6 +298,7 @@ function route() {
     return;
   }
   if (!session) { show('login'); return; }
+  const du = DEMO_USERS[session]; $('who').textContent = du ? du.name : session;
   show('dashboard'); refresh();
 }
 function ownerLogin() {
@@ -308,7 +310,7 @@ function ownerLogin() {
 $('loginForm').onsubmit = e => {
   e.preventDefault();
   const u = $('lu').value.trim(), p = $('lp').value;
-  if (DEMO_USERS[u] && DEMO_USERS[u].pass === p) { sessionStorage.setItem('session', u); $('lerr').classList.add('hidden'); route(); }
+  if (DEMO_USERS[u] && DEMO_USERS[u].pass === p) { sessionStorage.setItem('session', u); $('who').textContent = DEMO_USERS[u].name; $('lerr').classList.add('hidden'); route(); }
   else { $('lerr').textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة'; $('lerr').classList.remove('hidden'); }
 };
 $('logoutBtn').onclick = () => { sessionStorage.removeItem('session'); location.hash = ''; route(); };

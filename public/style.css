@@ -1,7 +1,13 @@
-:root{--bg1:#0b1f3a;--bg2:#13335e;--ink:#1d2939;--muted:#667085;--blue:#2563eb;--gold:#f2b705;--line:#e4e7ec;--shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04)}
+:root{--bg1:#1f2328;--bg2:#2d333b;--ink:#1d2939;--muted:#667085;--blue:#ea4f6b;--gold:#f2b705;--line:#e4e7ec;--shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04)}
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,'Segoe UI',Arial,sans-serif;direction:rtl;background:#f1f5fb;color:var(--ink)}
-.topbar{background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+body{margin:0;font-family:Tahoma,'Segoe UI',Arial,sans-serif;direction:rtl;background:#f3f4f6;color:var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;margin-bottom:8px;color:#fff}
+.brand img{height:40px;width:auto}
+.brand span{border-inline-start:3px solid var(--blue);padding-inline-start:10px}
+.greet{font-size:22px;font-weight:700;margin:0}
+.login-brand{justify-content:center;color:var(--bg1)}
+.login-brand span{border-color:var(--blue)}
+.topbar{background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff;border-bottom:4px solid var(--blue);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .topbar h1{font-size:20px;margin:0}
 .topbar .sub{opacity:.8;font-size:13px;margin-top:4px}
 .container{max-width:1280px;margin:0 auto;padding:20px}
@@ -31,7 +37,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 th{background:#f8fafc;color:var(--muted);font-weight:600}
 tbody tr.clickable{cursor:pointer}
-tbody tr.clickable:hover{background:#eef4ff}
+tbody tr.clickable:hover{background:#fdeef1}
 .table-wrap{overflow-x:auto}
 .modal{position:fixed;inset:0;background:rgba(16,24,40,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
 .modal.open{display:flex}
