@@ -36,10 +36,10 @@
    "username": "300",
    "displayName": "ناصر الخريش",
    "role": "viewer",
-   "salt": "RaDdFhvjIZovVKLJkKc84Q==",
+   "salt": "J1qMemhQf7F54zF9K2GmQA==",
    "wrap": {
-    "iv": "sSk1Znfw6zp0dxnV",
-    "ct": "PJOtUxmUeyFNuSfT6huKY0mLjFY5SpxGVJEqVIft4chZ/2a9QNRqjC3SN1lvNhdb"
+    "iv": "S+ejixuaXQywgXVB",
+    "ct": "yLyPDLlJY6bPin1oIEM5HInAbGy9YCxNaD0obETnPalFfULIfmHsKpsv7DlQrBul"
    }
   }
  ]
