@@ -56,7 +56,7 @@
       <label>إلى تاريخ <input type="date" id="to"></label>
       <button class="btn secondary" id="resetBtn">إعادة تعيين</button>
     </div>
-    <div class="hint" style="margin:-6px 0 12px">ملاحظة: الإنجاز المرفوع بالشهر الكامل يظهر عند اختيار الشهر كاملا أو كل الفترات.</div>
+    <div class="hint" style="margin:-6px 0 12px">ملاحظة: الإنجاز المرفوع بالشهر أو بفترة متعددة الأيام يظهر عند اختيار الفترة كاملة أو كل الفترات.</div>
     <div class="kpis">
       <div class="kpi" id="k-total"><div class="label">إجمالي الإنجازات</div><div class="value" id="v-total">0</div><div class="hint">اضغط لإعادة تعيين الفلاتر</div></div>
       <div class="kpi" id="k-emps"><div class="label">عدد الموظفين</div><div class="value" id="v-emps">0</div><div class="hint">اضغط للانتقال إلى الجدول</div></div>
@@ -118,16 +118,18 @@
       <div class="hint">الأعمدة المطلوبة: اسم الموظف، والمنجز من قبل الموظف. كل ملف يُضاف إلى الإجمالي السابق لكل موظف وينسب إلى التاريخ المختار.</div>
       <div class="form-row">
         <label class="field">نوع الرفع
-          <select id="utype"><option value="day">إنجاز ليوم محدد</option><option value="month">إنجاز شهر كامل</option></select>
+          <select id="utype"><option value="day">إنجاز ليوم محدد</option><option value="range">إنجاز لفترة (من تاريخ إلى تاريخ)</option><option value="month">إنجاز شهر كامل</option></select>
         </label>
         <label class="field" id="dayField">تاريخ الإنجاز<input type="date" id="udate"></label>
         <label class="field hidden" id="monthField">الشهر<input type="month" id="umonth"></label>
+        <label class="field hidden" id="rangeFromField">من تاريخ<input type="date" id="ufrom"></label>
+        <label class="field hidden" id="rangeToField">إلى تاريخ<input type="date" id="uto"></label>
       </div>
       <div class="form-row">
         <label class="field">الملف (xlsx / xls / csv)<input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
         <button class="btn gold" id="uploadBtn">رفع الملف</button>
       </div>
-      <div class="hint">عند اختيار "شهر كامل" تُنسب قيم الملف إلى ذلك الشهر بكامله، وتُجمع مع الإجماليات السابقة.</div>
+      <div class="hint">"يوم محدد": تُنسب القيم إلى ذلك اليوم. "فترة": تُنسب القيم إلى كل المدة من تاريخ إلى تاريخ (مثلا 5 أيام). "شهر كامل": تُنسب القيم إلى الشهر بكامله. وفي كل الحالات تُجمع القيم مع الإجماليات السابقة.</div>
       <div id="umsg" class="msg hidden"></div>
       <h2 style="margin-top:14px">الملفات المرفوعة</h2>
       <div class="table-wrap"><table>
@@ -420,6 +422,9 @@ $('toDash').onclick = () => { location.hash = ''; route(); };
 /* ---------- التجميع (التراكم) ---------- */
 /* ---------- الفترات: يوم محدد أو شهر كامل ---------- */
 function periodOf(u) {
+  if (u.type === 'range') {
+    return { kind: 'range', start: u.from, end: u.to, label: `من ${u.from} إلى ${u.to}`, key: u.from + '..' + u.to, month: u.from.slice(0, 7) };
+  }
   if (u.type === 'month') {
     const m = u.month;
     return { kind: 'month', start: m + '-01', end: m + '-' + lastDay(m), label: 'شهر ' + m, key: m, month: m };
@@ -427,9 +432,9 @@ function periodOf(u) {
   const d = u.date;
   return { kind: 'day', start: d, end: d, label: d, key: d, month: d.slice(0, 7) };
 }
-/* اليوم: يُحتسب إذا وقع داخل الفترة. الشهر: يُحتسب فقط إذا غطّت الفترة الشهر كاملا، حتى لا يظهر إجمالي الشهر ضمن فلتر يوم واحد. */
+/* اليوم: يُحتسب إذا وقع داخل الفترة. الشهر والفترة: يُحتسبان فقط إذا غطّت الفترة المختارة كامل مدتهما، حتى لا تظهر أرقام مجمّعة ضمن فلتر جزئي. */
 function overlapsRange(p, from, to) {
-  if (p.kind === 'month') return (!from || p.start >= from) && (!to || p.end <= to);
+  if (p.kind === 'month' || p.kind === 'range') return (!from || p.start >= from) && (!to || p.end <= to);
   return (!from || p.end >= from) && (!to || p.start <= to);
 }
 
@@ -567,9 +572,11 @@ async function renderOwner() {
   $('utbody').querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeUser(b.dataset.del));
 }
 $('utype').onchange = () => {
-  const month = $('utype').value === 'month';
-  $('dayField').classList.toggle('hidden', month);
-  $('monthField').classList.toggle('hidden', !month);
+  const t = $('utype').value;
+  $('dayField').classList.toggle('hidden', t !== 'day');
+  $('monthField').classList.toggle('hidden', t !== 'month');
+  $('rangeFromField').classList.toggle('hidden', t !== 'range');
+  $('rangeToField').classList.toggle('hidden', t !== 'range');
 };
 $('saveToken').onclick = () => {
   const t = $('ghToken').value.trim();
@@ -590,6 +597,11 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
   if ($('utype').value === 'month') {
     if (!$('umonth').value) return showMsgIn('umsg', 'حدد الشهر', false);
     period = { type: 'month', month: $('umonth').value };
+  } else if ($('utype').value === 'range') {
+    const a = $('ufrom').value, b = $('uto').value;
+    if (!a || !b) return showMsgIn('umsg', 'حدد تاريخ البداية وتاريخ النهاية', false);
+    if (a > b) return showMsgIn('umsg', 'تاريخ البداية يجب أن يكون قبل تاريخ النهاية', false);
+    period = { type: 'range', from: a, to: b };
   } else {
     if (!$('udate').value) return showMsgIn('umsg', 'حدد تاريخ الإنجاز', false);
     period = { type: 'day', date: $('udate').value };
