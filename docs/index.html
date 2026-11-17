@@ -648,6 +648,12 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
   const merged = [...counts.entries()].filter(([, c]) => c > 1).map(([k]) => map.get(k).name);
   const rows = [...map.values()].map(r => ({ name: r.name, value: Math.round(r.value * 100) / 100 }));
   if (!rows.length) return showMsgIn('umsg', 'لم يتم العثور على بيانات. تأكد من عمود "اسم الموظف" وعمود "المنجز من قبل الموظف"', false);
+  // الموظف المعتمد = كل من ظهر في أي رفع سابق (أي من يظهر في اللوحة). من لا يرد في هذا الملف يُسجَّل له صفر لهذه الفترة
+  const absent = [], seenKeys = new Set(map.keys());
+  for (const u of STORE.uploads) for (const r of u.rows) {
+    const k = normKey(r.name);
+    if (!seenKeys.has(k)) { seenKeys.add(k); rows.push({ name: r.name, value: 0 }); absent.push(r.name); }
+  }
 
   const entry = { id: Date.now(), filename: f.name, ...period, rows };
   STORE.uploads.push(entry);
@@ -658,6 +664,7 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
   let report = `تم رفع ${rows.length} موظف للفترة: ${pNew.label}. سيظهر في اللوحة بعد دقيقة تقريبا بعد إعادة النشر.`;
   if (merged.length) report += `\nجُمعت أسطر متعددة لـ: ${merged.join('، ')}.`;
   if (filled) report += `\nتمت تعبئة اسم ${filled} سطر فارغ من السطر السابق (تحقق من ذلك).`;
+  if (absent.length) report += `\nسُجّل صفر لـ ${absent.length} موظف غير موجود في هذا الملف: ${absent.join('، ')}.`;
   showMsgIn('umsg', report, true);
   await renderOwner();
 });
