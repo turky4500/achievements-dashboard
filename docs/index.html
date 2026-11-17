@@ -233,7 +233,8 @@ const COLORS = ['#138a4a','#f79009','#2563eb','#7a5af8','#0ba5ec','#eaaa08','#ee
 const fmt = n => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const todayStr = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
-function normKey(s) { return s.replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim().toLowerCase(); }
+function clean(s) { return String(s).replace(/[\u200B-\u200D\uFEFF\u00A0\u202A-\u202E]/g, ' ').replace(/\u0640/g, '').replace(/[\u064B-\u065F\u0670]/g, '').replace(/\s+/g, ' ').trim(); }
+function normKey(s) { return clean(s).replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[^\u0600-\u06FFa-zA-Z0-9]/g, '').toLowerCase(); }
 function toNumber(v) {
   if (typeof v === 'number') return v;
   if (typeof v === 'string') { const t = v.replace(/[,\s٬]/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)); const n = Number(t); return t !== '' && isFinite(n) ? n : NaN; }
@@ -619,13 +620,22 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
     if (a >= 0 && b >= 0) { nc = a; vc = b; start = i + 1; break; }
   }
   if (nc < 0) { nc = 0; vc = 1; }
-  const map = new Map();
+  const map = new Map(), counts = new Map();
+  let lastName = '', filled = 0;
   for (let i = start; i < grid.length; i++) {
-    const name = String(grid[i][nc] ?? '').replace(/\s+/g, ' ').trim();
+    let name = clean(grid[i][nc] ?? '');
+    const v = toNumber(grid[i][vc]);
+    // في الجداول المحورية يُكتب الاسم مرة واحدة، فالصفوف التالية التي لها رقم بلا اسم تتبع الاسم السابق
+    if (!name && isFinite(v) && lastName) { name = lastName; filled++; }
     if (!name || /(اجمالي|المجموع|total)/i.test(normKey(name))) continue;
-    const v = toNumber(grid[i][vc]); if (!isFinite(v)) continue;
-    const k = normKey(name); const cur = map.get(k) || { name, value: 0 }; cur.value += v; map.set(k, cur);
+    if (!isFinite(v)) continue;
+    lastName = name;
+    const k = normKey(name);
+    const cur = map.get(k) || { name, value: 0 };
+    cur.value += v; map.set(k, cur);
+    counts.set(k, (counts.get(k) || 0) + 1);
   }
+  const merged = [...counts.entries()].filter(([, c]) => c > 1).map(([k]) => map.get(k).name);
   const rows = [...map.values()].map(r => ({ name: r.name, value: Math.round(r.value * 100) / 100 }));
   if (!rows.length) return showMsgIn('umsg', 'لم يتم العثور على بيانات. تأكد من عمود "اسم الموظف" وعمود "المنجز من قبل الموظف"', false);
 
@@ -635,7 +645,10 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
   try { await saveStore(); }
   catch (ex) { STORE.uploads = STORE.uploads.filter(u => u !== entry); throw ex; }
   $('file').value = '';
-  showMsgIn('umsg', `تم رفع ${rows.length} موظف للفترة: ${pNew.label}. سيظهر في اللوحة بعد دقيقة تقريبا بعد إعادة النشر.`, true);
+  let report = `تم رفع ${rows.length} موظف للفترة: ${pNew.label}. سيظهر في اللوحة بعد دقيقة تقريبا بعد إعادة النشر.`;
+  if (merged.length) report += `\nجُمعت أسطر متعددة لـ: ${merged.join('، ')}.`;
+  if (filled) report += `\nتمت تعبئة اسم ${filled} سطر فارغ من السطر السابق (تحقق من ذلك).`;
+  showMsgIn('umsg', report, true);
   await renderOwner();
 });
 
