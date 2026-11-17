@@ -612,7 +612,17 @@ $('uploadBtn').onclick = () => withBusy($('uploadBtn'), async () => {
   if (overlaps.length && !confirm(`يوجد ${overlaps.length} رفع سابق يتداخل مع ${pNew.label}. سيتم جمع هذه القيم فوق الإجماليات السابقة (وقد يحدث تكرار). هل تريد المتابعة؟`)) return;
 
   const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
-  const grid = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
+  const ws0 = wb.Sheets[wb.SheetNames[0]];
+  // الخلايا المدموجة: القيمة النصية (الاسم) تُنسخ إلى كل خلية داخل الدمج، لأن Excel يكتبها في الخلية العلوية فقط
+  (ws0['!merges'] || []).forEach(m => {
+    const top = ws0[XLSX.utils.encode_cell({ r: m.s.r, c: m.s.c })];
+    if (!top || typeof top.v !== 'string' || !top.v.trim()) return;
+    for (let r = m.s.r; r <= m.e.r; r++) for (let c = m.s.c; c <= m.e.c; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!ws0[addr] || ws0[addr].v === '' || ws0[addr].v == null) ws0[addr] = { t: 's', v: top.v };
+    }
+  });
+  const grid = XLSX.utils.sheet_to_json(ws0, { header: 1, defval: '', raw: true });
   let nc = -1, vc = -1, start = 0;
   for (let i = 0; i < Math.min(grid.length, 30); i++) {
     let a = -1, b = -1;
