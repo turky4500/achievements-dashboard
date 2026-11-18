@@ -58,3 +58,24 @@ tbody tr.clickable:hover{background:#e8f5ee}
 .login-card .field{margin-bottom:14px}
 .login-card input{width:100%}
 .login-card .btn{width:100%;padding:11px}
+/* ===== تصميم اللوحة (على شكل لوحات Power BI) ===== */
+.dtop{background:linear-gradient(135deg,#0b3d24,#13703f);color:#fff;border-bottom:4px solid #f2b705;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dtitle{font-size:22px;margin:6px 0 4px;font-weight:700}
+.greet-line{font-size:15px;opacity:.95}
+.dtop .btn.secondary{background:rgba(255,255,255,.15);color:#fff}
+.kpis .kpi{border-right:0;border-top:4px solid #138a4a;text-align:right}
+.kpis .kpi:nth-child(even){border-top-color:#f79009}
+.kpis .kpi .value{color:#0b3d24}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.kpi-sub.up{color:#067647;font-weight:600}
+.kpi-sub.down{color:#d92d20;font-weight:600}
+.grid3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.grid3,.grid2{grid-template-columns:1fr}}
+.gauge-wrap{position:relative;height:280px}
+.gauge-center{position:absolute;left:0;right:0;top:0;bottom:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.gauge-center .big{font-size:34px;font-weight:700;color:#138a4a}
+.gauge-center .small{font-size:12px;color:var(--muted)}
+.clickable-card{cursor:pointer}
+.clickable-card:hover{box-shadow:0 6px 16px rgba(16,24,40,.12)}
+.card h2{color:#0b3d24}
