@@ -47,10 +47,9 @@
       <h1 class="dtitle">لوحة انجازات موظفين الرخص التجارية والاستثمارية</h1>
       <div class="greet-line">مرحبا بك، <b id="who"></b> &nbsp;·&nbsp; عرض فقط</div>
     </div>
-    <div class="dtop-btns"><button class="btn secondary" id="motionBtn">إيقاف الحركة</button><button class="btn secondary" id="logoutBtn">تسجيل الخروج</button></div>
+    <button class="btn secondary" id="logoutBtn">تسجيل الخروج</button>
   </div>
   <div class="container">
-    <div class="spot"><div><span class="pulse" id="spot-dot"></span><span id="spot-rank">تمييز متحرك</span></div><b id="spot-name">—</b></div>
     <div class="filters">
       <label>الشهر <select id="month"></select></label>
       <label>من تاريخ <input type="date" id="from"></label>
@@ -399,7 +398,7 @@ function endSession() {
   trackTimer = null;
   sessionStorage.removeItem('visit-sid');
   sessionStorage.removeItem('session');
-  SESSION = null; USERS = null; STORE = null; clearInterval(spotTimer);
+  SESSION = null; USERS = null; STORE = null;
   location.hash = ''; route();
 }
 
@@ -479,47 +478,6 @@ function destroy(k) { if (charts[k]) { charts[k].destroy(); delete charts[k]; } 
 function monthLabel(ym) { const [y, m] = ym.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }); }
 function lastDay(ym) { const [y, m] = ym.split('-').map(Number); return String(new Date(y, m, 0).getDate()).padStart(2, '0'); }
 
-const REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-let motionOn = !REDUCE && localStorage.getItem('dashMotion') !== 'off';
-let spotTimer = null, spotHot = 0;
-function countUp(el, target) {
-  const id = (el._cu = (el._cu || 0) + 1);
-  if (!motionOn || !isFinite(target)) { el.textContent = fmt(target); return; }
-  const t0 = performance.now(), dur = 1000;
-  const step = now => {
-    if (id !== el._cu) return;
-    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt(target * e);
-    if (p < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-function paintSpot(emps, i) {
-  if (charts.bar) { charts.bar.data.datasets[0].backgroundColor = emps.map((e, j) => j === i ? '#f79009' : '#138a4a'); charts.bar.update(); }
-  const e = emps[i];
-  $('spot-name').textContent = `${e.name} — ${fmt(e.total)}`;
-  $('spot-rank').textContent = 'تمييز متحرك: المركز ' + (i + 1);
-}
-function spotlight(emps) {
-  clearInterval(spotTimer);
-  $('spot-dot').style.display = motionOn ? '' : 'none';
-  $('motionBtn').textContent = motionOn ? 'إيقاف الحركة' : 'تشغيل الحركة';
-  if (!emps.length) { $('spot-name').textContent = '—'; $('spot-rank').textContent = 'لا توجد بيانات'; return; }
-  const top = Math.min(3, emps.length);
-  if (!motionOn) {
-    if (charts.bar) { charts.bar.data.datasets[0].backgroundColor = '#138a4a'; charts.bar.update('none'); }
-    $('spot-name').textContent = `${emps[0].name} — ${fmt(emps[0].total)}`;
-    $('spot-rank').textContent = 'الأعلى إنجازا';
-    return;
-  }
-  spotHot = 0; paintSpot(emps, 0);
-  spotTimer = setInterval(() => { if (!$('dashboard').classList.contains('hidden')) { spotHot = (spotHot + 1) % top; paintSpot(emps, spotHot); } }, 3500);
-}
-$('motionBtn').onclick = () => {
-  motionOn = !motionOn;
-  localStorage.setItem('dashMotion', motionOn ? 'on' : 'off');
-  if (agg) { spotlight(agg.employees); if (motionOn) refresh(); }
-};
 if (window.Chart) { Chart.defaults.font.family = "Tahoma, 'Segoe UI', Arial"; Chart.defaults.color = '#475467'; }
 const CLICK = (ev, els, c) => c.canvas.style.cursor = els.length ? 'pointer' : 'default';
 function refresh() {
@@ -530,7 +488,7 @@ function refresh() {
   const emps = agg.employees, n = emps.length, total = agg.total;
 
   // المؤشرات
-  countUp($('v-total'), total);
+  $('v-total').textContent = fmt(total);
   const sEl = $('s-total'), ms = agg.monthly;
   if (ms.length >= 2) {
     const a = ms[ms.length - 1][1], b = ms[ms.length - 2][1];
@@ -538,9 +496,9 @@ function refresh() {
     sEl.className = 'kpi-sub' + (ch === null ? '' : ch >= 0 ? ' up' : ' down');
     sEl.textContent = ch === null ? 'لا يوجد أساس للمقارنة' : (ch >= 0 ? '▲ ' : '▼ ') + Math.abs(ch).toFixed(1) + '% عن الشهر السابق';
   } else { sEl.className = 'kpi-sub'; sEl.textContent = ms.length ? 'بيانات شهر واحد فقط' : ''; }
-  countUp($('v-emps'), n);
-  countUp($('v-avg'), n ? total / n : 0);
-  countUp($('v-files'), agg.files);
+  $('v-emps').textContent = fmt(n);
+  $('v-avg').textContent = fmt(n ? total / n : 0);
+  $('v-files').textContent = fmt(agg.files);
   $('h-last').textContent = 'آخر تحديث: ' + (agg.last || '—');
   $('v-top').textContent = agg.top ? agg.top.name : '—';
   $('h-top').textContent = agg.top ? 'إنجاز: ' + fmt(agg.top.total) : '';
@@ -599,7 +557,6 @@ function refresh() {
     options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
       onClick: (ev, els) => { if (els.length && els[0].index < t3.length) openEmp(t3[els[0].index].key); }, onHover: CLICK }
   });
-  spotlight(emps);
   renderTable();
 }
 function renderTable() {

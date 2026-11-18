@@ -79,18 +79,3 @@ tbody tr.clickable:hover{background:#e8f5ee}
 .clickable-card{cursor:pointer}
 .clickable-card:hover{box-shadow:0 6px 16px rgba(16,24,40,.12)}
 .card h2{color:#0b3d24}
-
-/* ===== حركات اللوحة ===== */
-.dtop-btns{display:flex;gap:8px;flex-wrap:wrap}
-.dtop .btn.secondary{background:rgba(255,255,255,.15);color:#fff}
-.spot{background:linear-gradient(135deg,#ecfdf3,#fff);border:1px solid #abefc6;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.spot b{font-size:17px;color:#0b3d24}
-.pulse{width:10px;height:10px;border-radius:50%;background:#12b76a;display:inline-block;margin-inline-start:6px;animation:pulse 1.6s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(18,183,106,.6)}70%{box-shadow:0 0 0 10px rgba(18,183,106,0)}100%{box-shadow:0 0 0 0 rgba(18,183,106,0)}}
-#dashboard .kpi{animation:rise .6s ease both;transition:transform .2s,box-shadow .2s}
-#dashboard .kpi:nth-child(2){animation-delay:.08s}
-#dashboard .kpi:nth-child(3){animation-delay:.16s}
-#dashboard .kpi:nth-child(4){animation-delay:.24s}
-#dashboard .kpi:nth-child(5){animation-delay:.32s}
-@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
